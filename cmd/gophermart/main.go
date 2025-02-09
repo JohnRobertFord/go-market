@@ -32,7 +32,10 @@ func main() {
 	userRepository := storage.NewUserRepository(pg)
 	userHandler := handler.NewUserHandler(userRepository)
 
-	go server.NewServer(cfg, userHandler).RunServer()
+	orderRepository := storage.NewOrderRepository(pg)
+	orderHandler := handler.NewOrderHandler(orderRepository)
+
+	go server.NewServer(cfg, userHandler, orderHandler).RunServer()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan,
 		os.Interrupt,

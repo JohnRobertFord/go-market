@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 
-	crpt "github.com/JohnRobertFord/go-market/internal/crypt"
 	"github.com/JohnRobertFord/go-market/internal/model"
+	"github.com/JohnRobertFord/go-market/internal/util"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -23,13 +23,13 @@ func NewUserRepository(db *DB) *UserRepository {
 
 func (u *UserRepository) NewUser(ctx context.Context, user *model.User) (*model.User, error) {
 
-	hash, _ := crpt.HashPassword(user.Password)
+	hash, _ := util.HashPassword(user.Password)
 	_, err := u.db.pgPool.Exec(ctx, createUserQuery, user.Name, hash)
 	if e, ok := err.(*pgconn.PgError); ok {
 		if e.Code == "23505" {
 			return nil, model.ErrDataConflict
 		} else {
-			return nil, err
+			return nil, model.ErrInternal
 		}
 	}
 	return user, nil
@@ -42,11 +42,12 @@ func (u *UserRepository) ValidateUser(ctx context.Context, user *model.User) err
 	if err != nil {
 		if err == model.ErrNoRows {
 			return model.ErrNoRows
+		} else {
+			return model.ErrInternal
 		}
-		return err
 	}
 
-	if ok := crpt.CheckPasswordHash(user.Password, hash); !ok {
+	if ok := util.CheckPasswordHash(user.Password, hash); !ok {
 		return model.ErrValidate
 	}
 

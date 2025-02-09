@@ -15,13 +15,21 @@ type DB struct {
 }
 
 var (
-	pgInstance       *DB
-	pgOnce           sync.Once
-	createTableQuery = `CREATE TABLE IF NOT EXISTS users(
+	pgInstance           *DB
+	pgOnce               sync.Once
+	createUserTableQuery = `CREATE TABLE IF NOT EXISTS users(
 		"id"		 int generated always as identity,
 		"username"	 varchar(20) UNIQUE NOT NULL,
 		"hash" 		 varchar(100) NOT NULL,
 		"created_at" DATE NOT NULL
+		);`
+	createOrderTableQuery = `CREATE TABLE IF NOT EXISTS orders(
+		"id"		 int generated always as identity,
+		"username"	 varchar(20) NOT NULL,
+		"order_id" 	 NUMERIC NOT NULL,
+		"status"	 varchar(20) NOT NULL,
+		"created_at" TIMESTAMP NOT NULL,
+		"updated_at" TIMESTAMP NOT NULL
 		);`
 )
 
@@ -45,7 +53,8 @@ func NewStorage(ctx context.Context, c *config.Config) (*DB, error) {
 		return nil, err
 	}
 
-	_, err = pgInstance.pgPool.Exec(ctx, createTableQuery)
+	_, err = pgInstance.pgPool.Exec(ctx, createUserTableQuery)
+	_, err = pgInstance.pgPool.Exec(ctx, createOrderTableQuery)
 
 	return pgInstance, err
 }
