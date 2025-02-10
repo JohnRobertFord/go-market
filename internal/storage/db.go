@@ -26,8 +26,9 @@ var (
 	createOrderTableQuery = `CREATE TABLE IF NOT EXISTS orders(
 		"id"		 int generated always as identity,
 		"username"	 varchar(20) NOT NULL,
-		"order_id" 	 NUMERIC NOT NULL,
+		"order_id" 	 varchar(50) NOT NULL,
 		"status"	 varchar(20) NOT NULL,
+		"accrual"	 NUMERIC,
 		"created_at" TIMESTAMP NOT NULL,
 		"updated_at" TIMESTAMP NOT NULL
 		);`
@@ -54,7 +55,12 @@ func NewStorage(ctx context.Context, c *config.Config) (*DB, error) {
 	}
 
 	_, err = pgInstance.pgPool.Exec(ctx, createUserTableQuery)
+	if err != nil {
+		return nil, err
+	}
 	_, err = pgInstance.pgPool.Exec(ctx, createOrderTableQuery)
-
-	return pgInstance, err
+	if err != nil {
+		return nil, err
+	}
+	return pgInstance, nil
 }

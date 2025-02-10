@@ -35,7 +35,10 @@ func main() {
 	orderRepository := storage.NewOrderRepository(pg)
 	orderHandler := handler.NewOrderHandler(orderRepository)
 
-	go server.NewServer(cfg, userHandler, orderHandler).RunServer()
+	balanceRepository := storage.NewBalanceRepository(pg)
+	balanceHandler := handler.NewBalanceHandler(balanceRepository)
+
+	go server.NewServer(cfg, userHandler, orderHandler, balanceHandler).RunServer()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan,
 		os.Interrupt,

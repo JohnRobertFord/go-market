@@ -12,8 +12,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var jwtKey = []byte("JWT_Secret")
-
 type (
 	UserHandler struct {
 		userRepo *storage.UserRepository
@@ -35,7 +33,7 @@ func NewUserHandler(userRepo *storage.UserRepository) *UserHandler {
 func Placeholder() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, "Placeholder\n")
 

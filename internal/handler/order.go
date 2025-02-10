@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -100,7 +99,6 @@ func (o *OrderHandler) ListOrders(w http.ResponseWriter, req *http.Request) {
 	}
 	res, err := o.orderRepo.List(ctx, user)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -110,20 +108,22 @@ func (o *OrderHandler) ListOrders(w http.ResponseWriter, req *http.Request) {
 	w.Write(out)
 }
 
-func validateOrder(in io.ReadCloser) (*uint64, error) {
+func validateOrder(in io.ReadCloser) (*string, error) {
 
 	b, err := io.ReadAll(in)
 	if err != nil {
 		return nil, model.ErrInternal
 	}
-	out, err := strconv.ParseUint(string(b), 10, 64)
+	out := string(b)
+	bUint, err := strconv.ParseUint(out, 10, 64)
 	if err != nil {
 		return nil, model.ErrData
 	}
 
 	// Luhn check
-	if !util.Valid(out) {
+	if !util.Valid(bUint) {
 		return nil, model.ErrCheck
 	}
+
 	return &out, nil
 }

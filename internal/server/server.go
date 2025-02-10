@@ -10,7 +10,6 @@ import (
 	"github.com/JohnRobertFord/go-market/internal/handler"
 	"github.com/JohnRobertFord/go-market/internal/logger"
 	"github.com/go-chi/chi"
-	// "github.com/go-chi/chi/v5/middleware"
 )
 
 type server struct {
@@ -22,7 +21,7 @@ func (s server) RunServer() {
 	s.Server.Shutdown(context.Background())
 }
 
-func NewServer(cfg *config.Config, userHandler *handler.UserHandler, orderHandler *handler.OrderHandler) *server {
+func NewServer(cfg *config.Config, userHandler *handler.UserHandler, orderHandler *handler.OrderHandler, balanceHandler *handler.BalanceHandler) *server {
 
 	r := chi.NewRouter()
 	r.Use(logger.Logging, auth.AuthJWT)
@@ -32,7 +31,7 @@ func NewServer(cfg *config.Config, userHandler *handler.UserHandler, orderHandle
 		r.Post("/login", userHandler.Login)
 		r.Post("/orders", orderHandler.CreateOrder)
 		r.Get("/orders", orderHandler.ListOrders)
-		r.Get("/balance", handler.Placeholder())
+		r.Get("/balance", balanceHandler.GetBalance)
 		r.Post("/balance/withdraw", handler.Placeholder())
 		r.Get("/withdrawals", handler.Placeholder())
 	})

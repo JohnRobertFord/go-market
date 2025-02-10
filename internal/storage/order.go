@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	createOrderQuery = `INSERT INTO orders("username", "order_id", "status", "created_at", "updated_at") VALUES($1, $2, $3, $4, $4)`
-	listOrdersQuery  = `SELECT username, order_id, status, created_at, updated_at FROM orders WHERE username=$1 ORDER BY updated_at DESC`
-	searchQuery      = `SELECT "username", "order_id", "status", "created_at", "updated_at" FROM orders WHERE order_id=$1`
+	createOrderQuery = `INSERT INTO orders(username, order_id, status, accrual, created_at, updated_at) VALUES($1, $2, $3, 0, $4, $4)`
+	listOrdersQuery  = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE username=$1 ORDER BY created_at DESC`
+	searchQuery      = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE order_id=$1`
 )
 
 type OrderRepository struct {
