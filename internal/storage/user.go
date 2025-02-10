@@ -5,6 +5,7 @@ import (
 
 	"github.com/JohnRobertFord/go-market/internal/model"
 	"github.com/JohnRobertFord/go-market/internal/util"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -40,8 +41,8 @@ func (u *UserRepository) ValidateUser(ctx context.Context, user *model.User) err
 	var hash string
 	err := u.db.pgPool.QueryRow(ctx, getUserByName, user.Name).Scan(&hash)
 	if err != nil {
-		if err == model.ErrNoRows {
-			return model.ErrNoRows
+		if err == pgx.ErrNoRows {
+			return model.ErrValidate
 		} else {
 			return model.ErrInternal
 		}

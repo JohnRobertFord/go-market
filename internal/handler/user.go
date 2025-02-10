@@ -3,25 +3,28 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/JohnRobertFord/go-market/internal/auth"
 	"github.com/JohnRobertFord/go-market/internal/model"
 	"github.com/JohnRobertFord/go-market/internal/storage"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-type UserHandler struct {
-	userRepo *storage.UserRepository
-}
-type registerRequest struct {
-	Name string `json:"login" `
-	PWD  string `json:"password"`
-}
+var jwtKey = []byte("JWT_Secret")
 
-var (
-	succes = map[string]string{
-		"message": "Success",
+type (
+	UserHandler struct {
+		userRepo *storage.UserRepository
+	}
+	registerRequest struct {
+		Name string `json:"login" `
+		PWD  string `json:"password"`
+	}
+	Claims struct {
+		Username string `json:"username"`
+		jwt.RegisteredClaims
 	}
 )
 
@@ -31,8 +34,6 @@ func NewUserHandler(userRepo *storage.UserRepository) *UserHandler {
 
 func Placeholder() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-
-		// ctx := req.Context()
 
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
@@ -68,7 +69,13 @@ func (uh *UserHandler) Register(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+
+	cookie, err := auth.CreateJWT(in.Name)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, cookie)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -90,26 +97,22 @@ func (uh *UserHandler) Login(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	err = uh.userRepo.ValidateUser(ctx, &model.User{Name: in.Name, Password: in.PWD})
 	if err != nil {
-		if err == model.ErrValidate {
+		switch err {
+		case model.ErrValidate:
 			w.WriteHeader(http.StatusUnauthorized)
-		} else {
+		case model.ErrInternal:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-}
-
-func respondeJSON(w http.ResponseWriter, status int, message interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(&message); err != nil {
-		fmt.Println(err)
+	cookie, err := auth.CreateJWT(in.Name)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	http.SetCookie(w, cookie)
+	w.WriteHeader(http.StatusOK)
 }

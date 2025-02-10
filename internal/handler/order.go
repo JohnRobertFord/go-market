@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/JohnRobertFord/go-market/internal/auth"
 	"github.com/JohnRobertFord/go-market/internal/model"
 	"github.com/JohnRobertFord/go-market/internal/storage"
 	"github.com/JohnRobertFord/go-market/internal/util"
@@ -42,11 +43,24 @@ func (o *OrderHandler) CreateOrder(w http.ResponseWriter, req *http.Request) {
 		case model.ErrInternal:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		fmt.Println(err)
+		return
+	}
+	cookie, err := req.Cookie("Authorization")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	user, err := auth.GetUser(cookie)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	order := &model.Order{
-		Username: "one",
+		Username: user,
 		Status:   "NEW",
 		OrderID:  *orderID,
 	}
@@ -70,7 +84,21 @@ func (o *OrderHandler) CreateOrder(w http.ResponseWriter, req *http.Request) {
 }
 func (o *OrderHandler) ListOrders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	res, err := o.orderRepo.List(ctx)
+	cookie, err := req.Cookie("Authorization")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	user, err := auth.GetUser(cookie)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	res, err := o.orderRepo.List(ctx, user)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

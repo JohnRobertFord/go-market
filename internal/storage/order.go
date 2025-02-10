@@ -12,7 +12,7 @@ import (
 
 var (
 	createOrderQuery = `INSERT INTO orders("username", "order_id", "status", "created_at", "updated_at") VALUES($1, $2, $3, $4, $4)`
-	listOrdersQuery  = `SELECT username, order_id, status, created_at, updated_at FROM orders ORDER BY updated_at DESC`
+	listOrdersQuery  = `SELECT username, order_id, status, created_at, updated_at FROM orders WHERE username=$1 ORDER BY updated_at DESC`
 	searchQuery      = `SELECT "username", "order_id", "status", "created_at", "updated_at" FROM orders WHERE order_id=$1`
 )
 
@@ -61,9 +61,9 @@ func (o *OrderRepository) Create(ctx context.Context, order *model.Order) error 
 // - `PROCESSING` — вознаграждение за заказ рассчитывается;
 // - `INVALID` — система расчёта вознаграждений отказала в расчёте;
 // - `PROCESSED` — данные по заказу проверены и информация о расчёте успешно получена.
-func (o *OrderRepository) List(ctx context.Context) ([]model.Order, error) {
+func (o *OrderRepository) List(ctx context.Context, user string) ([]model.Order, error) {
 
-	rows, err := o.db.pgPool.Query(ctx, listOrdersQuery)
+	rows, err := o.db.pgPool.Query(ctx, listOrdersQuery, user)
 	if err != nil {
 		return nil, err
 	}
