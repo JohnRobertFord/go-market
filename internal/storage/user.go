@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	createUserQuery = `INSERT INTO users("username", "hash", "created_at") VALUES($1, $2, current_timestamp)`
-	getUserByName   = `SELECT hash FROM users WHERE username=$1`
+	createUserQuery   = `INSERT INTO users("username", "hash", "created_at") VALUES($1, $2, current_timestamp)`
+	updateUserBalance = `INSERT INTO balances("username","current","withdrawn") VALUES($1, 0, 0)`
+	getUserByName     = `SELECT hash FROM users WHERE username=$1`
 )
 
 type UserRepository struct {
@@ -33,6 +34,8 @@ func (u *UserRepository) NewUser(ctx context.Context, user *model.User) (*model.
 			return nil, model.ErrInternal
 		}
 	}
+	u.db.pgPool.Exec(ctx, updateUserBalance, user.Name)
+
 	return user, nil
 }
 

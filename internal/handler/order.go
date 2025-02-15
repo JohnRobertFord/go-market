@@ -44,7 +44,7 @@ func (o *OrderHandler) CreateOrder(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	cookie, err := req.Cookie("Authorization")
+	user, err := auth.GetUser(req)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -53,11 +53,7 @@ func (o *OrderHandler) CreateOrder(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	user, err := auth.GetUser(cookie)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+
 	order := &model.Order{
 		Username: user,
 		Status:   "NEW",
@@ -81,19 +77,20 @@ func (o *OrderHandler) CreateOrder(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 }
+
+// - `200` — успешная обработка запроса.
+// - `204` — нет данных для ответа.
+// - `401` — пользователь не авторизован.
+// - `500` — внутренняя ошибка сервера.
 func (o *OrderHandler) ListOrders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	cookie, err := req.Cookie("Authorization")
+
+	user, err := auth.GetUser(req)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	user, err := auth.GetUser(cookie)
-	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -126,4 +123,10 @@ func validateOrder(in io.ReadCloser) (*string, error) {
 	}
 
 	return &out, nil
+}
+
+func Worker() {
+	// 1. Get order_id from orders with NEW or PROCESSING status
+	// 2. GET ACCRUAL/api/orders/{order_id}
+	// 3. Update orders and balances
 }

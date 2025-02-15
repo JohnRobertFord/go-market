@@ -73,7 +73,11 @@ func CreateJWT(username string) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func GetUser(cookie *http.Cookie) (string, error) {
+func GetUser(req *http.Request) (string, error) {
+	cookie, err := req.Cookie("Authorization")
+	if err != nil {
+		return "", err
+	}
 	tokenStr := cookie.Value
 	claims := &Claims{}
 	jwt.ParseWithClaims(tokenStr, claims, nil)

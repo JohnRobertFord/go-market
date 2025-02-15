@@ -21,7 +21,13 @@ func (s server) RunServer() {
 	s.Server.Shutdown(context.Background())
 }
 
-func NewServer(cfg *config.Config, userHandler *handler.UserHandler, orderHandler *handler.OrderHandler, balanceHandler *handler.BalanceHandler) *server {
+func NewServer(
+	cfg *config.Config,
+	userHandler *handler.UserHandler,
+	orderHandler *handler.OrderHandler,
+	balanceHandler *handler.BalanceHandler,
+	withdrawalHandler *handler.WithdrawalHandler,
+) *server {
 
 	r := chi.NewRouter()
 	r.Use(logger.Logging, auth.AuthJWT)
@@ -32,8 +38,8 @@ func NewServer(cfg *config.Config, userHandler *handler.UserHandler, orderHandle
 		r.Post("/orders", orderHandler.CreateOrder)
 		r.Get("/orders", orderHandler.ListOrders)
 		r.Get("/balance", balanceHandler.GetBalance)
-		r.Post("/balance/withdraw", handler.Placeholder())
-		r.Get("/withdrawals", handler.Placeholder())
+		r.Post("/balance/withdraw", withdrawalHandler.RequestWithdraw)
+		r.Get("/withdrawals", withdrawalHandler.GetWithdrawals)
 	})
 
 	return &server{

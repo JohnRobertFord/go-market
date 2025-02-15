@@ -1,8 +1,14 @@
 package storage
 
-import "context"
+import (
+	"context"
+	"fmt"
 
-// var getBalanceQuery = `SELECT current, withdraw FROM balance WHERE username=$1`
+	"github.com/JohnRobertFord/go-market/internal/model"
+	"github.com/jackc/pgx/v5"
+)
+
+var getBalanceQuery = `SELECT current, withdrawn FROM balances WHERE username=$1`
 
 type BalanceRepository struct {
 	db *DB
@@ -14,10 +20,19 @@ func NewBalanceRepository(db *DB) *BalanceRepository {
 	}
 }
 
-func (b *BalanceRepository) Balance(ctx context.Context) error {
-	// row, err := b.db.pgPool.Query(ctx, getBalanceQuery)
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
+func (b *BalanceRepository) Balance(ctx context.Context, user string) (*model.Balance, error) {
+
+	row, err := b.db.pgPool.Query(ctx, getBalanceQuery, user)
+	if err != nil {
+		return nil, err
+	}
+
+	ex, err := pgx.CollectOneRow(row, pgx.RowToStructByName[model.Balance])
+	fmt.Println(err)
+
+	if err != nil {
+		return nil, model.ErrInternal
+	}
+
+	return &ex, nil
 }

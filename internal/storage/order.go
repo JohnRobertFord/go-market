@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	createOrderQuery = `INSERT INTO orders(username, order_id, status, accrual, created_at, updated_at) VALUES($1, $2, $3, 0, $4, $4)`
-	listOrdersQuery  = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE username=$1 ORDER BY created_at DESC`
-	searchQuery      = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE order_id=$1`
+	createOrderQuery   = `INSERT INTO orders(username, order_id, status, accrual, created_at, updated_at) VALUES($1, $2, $3, 0, $4, $4)`
+	listAllOrdersQuery = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE username=$1 ORDER BY created_at DESC`
+	// listProcessingQuery = `SELECT order_id FROM orders WHERE status  ~ '(NEW|PROCESSING)' ORDER BY created_at ASC`
+	searchQuery = `SELECT username, order_id, status, accrual, created_at, updated_at FROM orders WHERE order_id=$1`
 )
 
 type OrderRepository struct {
@@ -63,15 +64,33 @@ func (o *OrderRepository) Create(ctx context.Context, order *model.Order) error 
 // - `PROCESSED` — данные по заказу проверены и информация о расчёте успешно получена.
 func (o *OrderRepository) List(ctx context.Context, user string) ([]model.Order, error) {
 
-	rows, err := o.db.pgPool.Query(ctx, listOrdersQuery, user)
+	rows, err := o.db.pgPool.Query(ctx, listAllOrdersQuery, user)
 	if err != nil {
-		return nil, err
+		return nil, model.ErrInternalDB
 	}
 	out, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.Order])
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, err
-		}
+		return nil, model.ErrInternalDB
+	}
+	if len(out) == 0 {
+		return nil, model.ErrNoRows
 	}
 	return out, nil
 }
+
+// func (o *OrderRepository) UpdateOrderStatus(ctx context.Context) error {
+// 	rows, err := o.db.pgPool.Query(ctx, listProcessingQuery)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	out, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.Order])
+// 	if err != nil {
+// 		if !errors.Is(err, pgx.ErrNoRows) {
+// 			return err
+// 		}
+// 	}
+// 	fmt.Println(out)
+
+// 	// make
+// 	return nil
+// }

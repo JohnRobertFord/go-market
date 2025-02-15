@@ -21,7 +21,7 @@ var (
 		"id"		 int generated always as identity,
 		"username"	 varchar(20) UNIQUE NOT NULL,
 		"hash" 		 varchar(100) NOT NULL,
-		"created_at" DATE NOT NULL
+		"created_at" TIMESTAMP NOT NULL
 		);`
 	createOrderTableQuery = `CREATE TABLE IF NOT EXISTS orders(
 		"id"		 int generated always as identity,
@@ -32,8 +32,22 @@ var (
 		"created_at" TIMESTAMP NOT NULL,
 		"updated_at" TIMESTAMP NOT NULL
 		);`
+	createBalanceTableQuery = `CREATE TABLE IF NOT EXISTS balances(
+		"id"		 int generated always as identity,
+		"username"	 varchar(20) UNIQUE NOT NULL,
+		"current"	 NUMERIC NOT NULL,
+		"withdrawn"	 NUMERIC NOT NULL
+		);`
+	createWithdrawalTableQuery = `CREATE TABLE IF NOT EXISTS withdrawals(
+		"id"		 int generated always as identity,
+		"username"	 varchar(20) NOT NULL,
+		"order_id"	 varchar(50) NOT NULL,
+		"sum"		 NUMERIC NOT NULL,
+		"processed_at" TIMESTAMP NOT NULL
+		);`
 )
 
+// number, sum, processed_at
 func (p *DB) Close() {
 	p.pgPool.Close()
 }
@@ -59,6 +73,14 @@ func NewStorage(ctx context.Context, c *config.Config) (*DB, error) {
 		return nil, err
 	}
 	_, err = pgInstance.pgPool.Exec(ctx, createOrderTableQuery)
+	if err != nil {
+		return nil, err
+	}
+	_, err = pgInstance.pgPool.Exec(ctx, createBalanceTableQuery)
+	if err != nil {
+		return nil, err
+	}
+	_, err = pgInstance.pgPool.Exec(ctx, createWithdrawalTableQuery)
 	if err != nil {
 		return nil, err
 	}
